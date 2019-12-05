@@ -69,20 +69,30 @@ def onnx_topologically_sort(model) :
 
     return s_model
 
+def convert_to_list(arg) :
+    ret = []
+    for e in arg :
+        ret.append(e)
+    return ret
+
 def yolov3_special_treatment(model) : 
 
-    # append arange_base (0..1024 / INT32 / 1D Tensor)
-    arange_base = numpy.arange( 0, 1024, dtype=int )
-    mod_initializer = model.graph.initializer
-    mod_initializer.append( onnx.helper.make_tensor('arange_base', onnx.TensorProto.INT64, [1024], arange_base) )
+    mod_input = convert_to_list(model.graph.input)
 
-    mod_input = model.graph.input
+    erase_target = []
 
-    # replace loop nodes
+    # replace loop nodes & add input parameter
     mod_node = []
     for n in model.graph.node : 
         if (n.op_type == 'Loop') :
-            ni = [ 'arange_base', n.input[2], n.input[0] ]
+            erase_target.append( n.input[1] )
+            erase_target.append( n.input[2] )
+            wn_name = 'usq/' + n.input[0]
+            ni = [ n.input[0] ]
+            no = [ wn_name ] 
+            nn = onnx.helper.make_node("Unsqueeze", ni, no, name=wn_name, axes=[0])
+            mod_node.append( nn )
+            ni = [ 'arange_base', 'arange_start', wn_name ]
             no = [ n.output[1] ]
             nn = onnx.helper.make_node("Slice", ni, no, name=n.name)
             mod_node.append( nn )
@@ -94,6 +104,32 @@ def yolov3_special_treatment(model) :
             mod_node.append( n )
         else :
             mod_node.append( n )
+
+    # remove zero subtract
+    mod2_node = []
+    for n in mod_node : 
+        if (n.op_type == 'Sub') and (n.input[1] in erase_target) :
+            ni = [n.input[0]]
+            no = [n.output[0]]
+            nn = onnx.helper.make_node("Identity", ni, no, name=n.name)
+            mod2_node.append( nn )
+        else :
+            mod2_node.append( n )
+    
+    mod_node = mod2_node
+
+    # remove unused initializer element
+    mod_initializer = []
+    for e in model.graph.initializer :
+        if not e.name in erase_target : 
+            mod_initializer.append( e )
+    
+    # append arange_base (0..512 / INT32 / 1D Tensor)
+    arange_base = numpy.arange( 0, 512, dtype=int )
+    mod_initializer.append( onnx.helper.make_tensor('arange_base', onnx.TensorProto.INT32, [512], arange_base) )
+    # append arange_start (0 / INT64 / 1D Tensor)
+    arange_start = numpy.zeros( [1], dtype=numpy.int64 )
+    mod_initializer.append( onnx.helper.make_tensor('arange_start', onnx.TensorProto.INT64, [1], arange_start) )
 
     m_graph = onnx.helper.make_graph(mod_node, model.graph.name, mod_input, model.graph.output, mod_initializer)
     m_model = onnx.helper.make_model(m_graph, producer_name=model.producer_name + '+onnx_optimizer', producer_version=model.producer_version+'+0.2')
