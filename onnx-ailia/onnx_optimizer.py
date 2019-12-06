@@ -6,6 +6,10 @@ import onnx
 import onnx.helper
 import onnx.checker
 import onnx.optimizer
+import onnx.version_converter
+
+SCRIPT_NAME = '+onnx_optimizer'
+SCRIPT_VERSION = '+0.3'
 
 class NodeInfo :
     def __init__(self, node) :
@@ -65,7 +69,7 @@ def onnx_topologically_sort(model) :
                 n.clear_input(name)
 
     s_graph = onnx.helper.make_graph(sorted, model.graph.name, model.graph.input, model.graph.output, model.graph.initializer)
-    s_model = onnx.helper.make_model(s_graph, producer_name=model.producer_name, producer_version=model.producer_version)
+    s_model = onnx.helper.make_model(s_graph, producer_name=model.producer_name, producer_version=model.producer_version, opset_imports=model.opset_import)
 
     return s_model
 
@@ -76,6 +80,11 @@ def convert_to_list(arg) :
     return ret
 
 def yolov3_special_treatment(model) : 
+
+    ver = model.opset_import[0].version
+    if (ver != 10) :
+        detail = 'unsupported model opset_version=({})'.format(ver)
+        raise Exception(detail)
 
     mod_input = convert_to_list(model.graph.input)
 
@@ -99,8 +108,11 @@ def yolov3_special_treatment(model) :
         elif (n.op_type == 'NonMaxSuppression') :
             iou = n.input[3]
             threshold = n.input[4]
-            mod_input.append( onnx.helper.make_tensor_value_info(iou, onnx.TensorProto.FLOAT, None) )
-            mod_input.append( onnx.helper.make_tensor_value_info(threshold, onnx.TensorProto.FLOAT, None) )
+            # workaround for AILIA
+            erase_target.append( iou )
+            erase_target.append( threshold )
+            mod_input.append( onnx.helper.make_tensor_value_info(iou, onnx.TensorProto.FLOAT, (1,)) )
+            mod_input.append( onnx.helper.make_tensor_value_info(threshold, onnx.TensorProto.FLOAT, (1,)) )
             mod_node.append( n )
         else :
             mod_node.append( n )
@@ -132,7 +144,7 @@ def yolov3_special_treatment(model) :
     mod_initializer.append( onnx.helper.make_tensor('arange_start', onnx.TensorProto.INT64, [1], arange_start) )
 
     m_graph = onnx.helper.make_graph(mod_node, model.graph.name, mod_input, model.graph.output, mod_initializer)
-    m_model = onnx.helper.make_model(m_graph, producer_name=model.producer_name + '+onnx_optimizer', producer_version=model.producer_version+'+0.2')
+    m_model = onnx.helper.make_model(m_graph, producer_name=model.producer_name + SCRIPT_NAME, producer_version=model.producer_version+SCRIPT_VERSION, opset_imports=model.opset_import)
 
     return m_model
 
@@ -160,6 +172,9 @@ def onnx_optimize(onnx_path, yolov3_mode) :
     else :
         # precheck
         onnx.checker.check_model(model)
+
+        # convert version
+        model = onnx.version_converter.convert_version(model, 10)
 
         # optimize 
         # model = onnx.optimizer.optimize(model, onnx.optimizer.get_available_passes() )
