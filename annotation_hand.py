@@ -11,13 +11,11 @@ import sys
 import glob
 import cv2
 
-#if len(sys.argv)!=2:
-#	print("python annotation_hand.py [folder path]")
-#	sys.exit(1)
+if len(sys.argv)!=2:
+	print("python annotation_hand.py [f:/hand_detection/dataset/vivahand/detectiondata/train/]")
+	sys.exit(1)
 
-#DATASET_ROOT_PATH=sys.argv[1]
-
-DATASET_ROOT_PATH="/OneDrive/keras/yolo-keras-hand-detection/dataset/vivahand/detectiondata/train/"
+DATASET_ROOT_PATH=sys.argv[1]
 
 if(not os.path.exists(DATASET_ROOT_PATH)):
 	print("folder not found "+DATASET_ROOT_PATH)
@@ -26,21 +24,17 @@ if(not os.path.exists(DATASET_ROOT_PATH)):
 OUTPUT_LABEL="annotations_yolov3_keras"
 OUTPUT_BASE_PATH=DATASET_ROOT_PATH+OUTPUT_LABEL
 
-#TRAIN_PATH=OUTPUT_BASE_PATH+"/train.txt"
-#TEST_PATH=OUTPUT_BASE_PATH+"/test.txt"
-
 if(not os.path.exists(OUTPUT_BASE_PATH)):
 	os.mkdir(OUTPUT_BASE_PATH)
 
-#f_train=open(TRAIN_PATH,mode="w")
-#f_test=open(TEST_PATH,mode="w")
-
 annotation_path=OUTPUT_BASE_PATH+"/train.txt"
-f_annotation=open(annotation_path,mode="w")
+print(annotation_path)
 
-file_list = glob.glob(DATASET_ROOT_PATH+"/posGt/*")
+f_annotation=open(annotation_path,mode="w")
+file_list = glob.glob(DATASET_ROOT_PATH+"posGt/*")
 
 for path in file_list:
+	path=path.replace("\\","/")
 	print(path)
 
 	lines=open(path).readlines()
@@ -49,7 +43,7 @@ for path in file_list:
 
 	file_path=path.split("/")
 	file_path=file_path[len(file_path)-1].split(".")[0]
-	image_path=DATASET_ROOT_PATH+"/pos/"+file_path+".png"
+	image_path=DATASET_ROOT_PATH+"pos/"+file_path+".png"
 	print(image_path)
 
 	image=cv2.imread(image_path)
