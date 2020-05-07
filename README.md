@@ -5,6 +5,7 @@ Implement Face detection using keras-yolo3.
 ## Requirements
 
 - Keras 2.2.4 or lower (Issue : https://github.com/qqwweee/keras-yolo3/issues/544)
+- Tensorflow 1.13.2 or lower (Issue : https://github.com/NVIDIA/TensorRT/issues/339)
 - keras2onnx 1.5.1 (1.5.2 failed to convert onnx)
 - keras-yolo3 (checked on version Jul 31, 2018 e6598d13c703029b2686bc2eb8d5c09badf42992)
 - Python 3.5 or later
