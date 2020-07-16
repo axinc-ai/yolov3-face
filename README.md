@@ -32,13 +32,17 @@ Create annotation data.
 
     python annotation.py f:/fddb/
 
+Create masked annotation data.
+
+    python3 annotation-medical-mask-dataset.py
+
 ## Training
 
 Training from 2845 pictures.
 
     python train.py f:/fddb/ ./model_data/face_classes.txt ./model_data/tiny_yolo_anchors.txt
 
-Trained from masked model.
+Trained from 678 pictures.
 
     python3 train.py ./medical-mask-dataset/ ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
 
