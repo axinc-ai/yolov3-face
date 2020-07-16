@@ -30,7 +30,7 @@ if(not os.path.exists(DATASET_ROOT_PATH)):
     sys.exit(1)
 
 def _main():
-    annotation_path = DATASET_ROOT_PATH+'annotations_yolov3_keras/train.txt'
+    annotation_path = DATASET_ROOT_PATH+'train.txt'
     log_dir = 'model_data/logs/'
     #classes_path = 'model_data/face_classes.txt'
     #anchors_path = 'model_data/tiny_yolo_anchors.txt'

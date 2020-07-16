@@ -38,6 +38,10 @@ Training from 2845 pictures.
 
     python train.py f:/fddb/ ./model_data/face_classes.txt ./model_data/tiny_yolo_anchors.txt
 
+Trained from masked model.
+
+    python3 train.py ./medical-mask-dataset/ ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
+
 This is an output data path.
 
     ./model_data/log/trained_weights_final.h5
