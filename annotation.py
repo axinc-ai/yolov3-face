@@ -11,108 +11,141 @@ import sys
 import glob
 import cv2
 
-if len(sys.argv)!=2:
-	print("python annotation.py [folder path]")
+if len(sys.argv)!=3:
+	print("python annotation.py [fddb/medical-mask-dataset/mixed] [dataset folder path]")
 	sys.exit(1)
 
-DATASET_ROOT_PATH=sys.argv[1]
+MODE=sys.argv[1]
+DATASET_ROOT_PATH=sys.argv[2]
+
+if MODE!="fddb" and MODE!="medical-mask-dataset" and MODE!="mixed":
+	print("Unknown mode "+MODE)
+	sys.exit(1)
 
 if(not os.path.exists(DATASET_ROOT_PATH)):
 	print("folder not found "+DATASET_ROOT_PATH)
 	sys.exit(1)
 
-OUTPUT_LABEL="annotations_yolov3_keras"
-OUTPUT_BASE_PATH=DATASET_ROOT_PATH+OUTPUT_LABEL
-
-#TRAIN_PATH=OUTPUT_BASE_PATH+"/train.txt"
-#TEST_PATH=OUTPUT_BASE_PATH+"/test.txt"
-
-if(not os.path.exists(OUTPUT_BASE_PATH)):
-	os.mkdir(OUTPUT_BASE_PATH)
-
-#f_train=open(TRAIN_PATH,mode="w")
-#f_test=open(TEST_PATH,mode="w")
-
-file_no=0
-
-annotation_path=OUTPUT_BASE_PATH+"/train.txt"
+annotation_path="./train_"+MODE+".txt"
 f_annotation=open(annotation_path,mode="w")
 
-for list in range(1,11):
-	list2=str(list)
-	if list<10:
-		list2="0"+str(list)
-	path=DATASET_ROOT_PATH+"FDDB-folds/FDDB-fold-"+str(list2)+"-ellipseList.txt"
-	lines=open(path).readlines()
+def fddb(f_annotation,root_src_dir,category):
+	if(not os.path.exists(root_src_dir)):
+		print("folder not found "+root_src_dir)
+		sys.exit(1)
 
-	line_no=0
+	for list in range(1,11):
+		list2=str(list)
+		if list<10:
+			list2="0"+str(list)
+		path=root_src_dir+"FDDB-folds/FDDB-fold-"+str(list2)+"-ellipseList.txt"
+		lines=open(path).readlines()
 
-	while True:
-		if line_no>=len(lines):
-			break
+		line_no=0
 
-		line=lines[line_no]
-		line_no=line_no+1
+		while True:
+			if line_no>=len(lines):
+				break
 
-		file_path=line.replace("\n","")
-		image_path=DATASET_ROOT_PATH+"originalPics/"+file_path+".jpg"
-
-		file_no=file_no+1
-
-		image=cv2.imread(image_path)
-		#print(image.shape)
-		imagew=image.shape[1]
-		imageh=image.shape[0]
-
-		copy_path=OUTPUT_BASE_PATH+"/"+str(file_no)+".jpg"
-		relative_path="../FDDB-folds/"+OUTPUT_LABEL+"/"+str(file_no)+".jpg"
-
-		#if file_no%4 == 0:
-		f_annotation.write(copy_path+" ")
-		#else:
-		#	f_test.write(relative_path+" ")
-
-		shutil.copyfile(image_path, copy_path)
-		
-		line_n=int(lines[line_no])
-		line_no=line_no+1
-
-
-		for i in range(line_n):
 			line=lines[line_no]
 			line_no=line_no+1
-			#print(line)
-			data=line.split(" ")
-			major_axis_radius=float(data[0])
-			minor_axis_radius=float(data[1])
-			angle=float(data[2])
-			center_x=float(data[3])
-			center_y=float(data[4])
+
+			file_path=line.replace("\n","")
+			image_path=root_src_dir+"originalPics/"+file_path+".jpg"
+
+			image=cv2.imread(image_path)
+			imagew=image.shape[1]
+			imageh=image.shape[0]
+
+			f_annotation.write(image_path+" ")
 			
-			x=center_x
-			y=center_y
+			line_n=int(lines[line_no])
+			line_no=line_no+1
 
-			w=minor_axis_radius*2
-			h=major_axis_radius*2
+			for i in range(line_n):
+				line=lines[line_no]
+				line_no=line_no+1
+				data=line.split(" ")
+				major_axis_radius=float(data[0])
+				minor_axis_radius=float(data[1])
+				angle=float(data[2])
+				center_x=float(data[3])
+				center_y=float(data[4])
+				
+				x=center_x
+				y=center_y
 
-			category=0
-			xmin=int(x-w/2)
-			ymin=int(y-h/2)
-			xmax=int(x+w/2)
-			ymax=int(y+h/2)
+				w=minor_axis_radius*2
+				h=major_axis_radius*2
 
-			x=1.0*x/imagew
-			y=1.0*y/imageh
-			w=1.0*w/imagew
-			h=1.0*h/imageh
+				xmin=int(x-w/2)
+				ymin=int(y-h/2)
+				xmax=int(x+w/2)
+				ymax=int(y+h/2)
 
-			if w>0 and h>0 and x-w/2>=0 and y-h/2>=0 and x+w/2<=1 and y+h/2<=1:
+				x=1.0*x/imagew
+				y=1.0*y/imageh
+				w=1.0*w/imagew
+				h=1.0*h/imageh
+
+				if w>0 and h>0 and x-w/2>=0 and y-h/2>=0 and x+w/2<=1 and y+h/2<=1:
+					f_annotation.write(""+str(xmin)+","+str(ymin)+","+str(xmax)+","+str(ymax)+","+str(category)+" ")
+				else:
+					print("Invalid position removed "+str(x)+" "+str(y)+" "+str(w)+" "+str(h))
+			
+			f_annotation.write("\n")
+
+def medical_mask_dataset(f_annotation,root_src_dir):
+	if(not os.path.exists(root_src_dir)):
+		print("folder not found "+root_src_dir)
+		sys.exit(1)
+
+	for src_dir, dirs, files in os.walk(root_src_dir):
+		for file_ in files:
+			root, ext = os.path.splitext(file_)
+
+			if file_==".DS_Store":
+				continue
+			if file_=="Thumbs.db":
+				continue
+			if not(ext == ".txt"):
+				continue
+			if file_=="train.txt":
+				continue
+			
+			path = src_dir + file_
+			lines=open(path).readlines()
+			print(path)
+
+			jpg_path = file_.replace(".txt",".jpg")
+			f_annotation.write(root_src_dir+jpg_path+" ")
+
+			image=cv2.imread(root_src_dir+jpg_path)
+			imagew=image.shape[1]
+			imageh=image.shape[0]
+
+			for line in lines:
+				if line=="\n":
+					continue
+				data = line.split(" ")
+				xmin=float(data[1])-float(data[3])/2
+				ymin=float(data[2])-float(data[4])/2
+				xmax=xmin+float(data[3])
+				ymax=ymin+float(data[4])
+				xmin=int(xmin*imagew)
+				ymin=int(ymin*imageh)
+				xmax=int(xmax*imagew)
+				ymax=int(ymax*imageh)
+				category=int(data[0])
 				f_annotation.write(""+str(xmin)+","+str(ymin)+","+str(xmax)+","+str(ymax)+","+str(category)+" ")
-			else:
-				print("Invalid position removed "+str(x)+" "+str(y)+" "+str(w)+" "+str(h))
-		
-		f_annotation.write("\n")
+			f_annotation.write("\n")
+
+if MODE=="fddb":
+	fddb(f_annotation,DATASET_ROOT_PATH+"fddb/",0)
+if MODE=="medical-mask-dataset":
+	medical_mask_dataset(f_annotation,DATASET_ROOT_PATH+"medical-mask-dataset/")
+if MODE=="mixed":
+	fddb(f_annotation,DATASET_ROOT_PATH+"fddb/",2)
+	medical_mask_dataset(f_annotation,DATASET_ROOT_PATH+"medical-mask-dataset/")
 
 f_annotation.close()
-#f_train.close()
-#f_test.close()
