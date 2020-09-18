@@ -66,13 +66,14 @@ python3 annotation.py mixed /Volumes/ST5/
 Training from fddb 2845 pictures.
 
 ```
-    python3 train.py fddb ./model_data/face_classes.txt ./model_data/tiny_yolo_anchors.txt
+cd keras-yolo3
+python3 train.py fddb ./model_data/face_classes.txt ./model_data/tiny_yolo_anchors.txt
 ```
 
 This is an output data path.
 
 ```
-    ./model_data/log/trained_weights_final.h5
+./model_data/log/trained_weights_final.h5
 ```
 
 ### medical-mask-dataset
@@ -80,6 +81,7 @@ This is an output data path.
 Trained from medical-mask-dataset 678 pictures.
 
 ```
+cd keras-yolo3
 python3 train.py medical-mask-dataset ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
 ```
 
@@ -88,6 +90,7 @@ python3 train.py medical-mask-dataset ./model_data/mask_classes.txt ./model_data
 Trained from fddb + medical-mask-dataset 2845 + 678 pictures.
 
 ```
+cd keras-yolo3
 python3 train.py mixed ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
 ```
 
@@ -103,6 +106,7 @@ python3 keras-yolo3-to-onnx.py ../model_data/logs/trained_weights_final.h5 ../mo
 ### medical-mask-dataset or mixed
 
 ```
+cd keras-onnx
 python3 keras-yolo3-to-onnx.py ../model_data/logs/trained_weights_final.h5 ../model_data/mask_classes.txt ../model_data/tiny_yolo_anchors.txt ../model_data/ax_masked_face.onnx
 ```
 
@@ -128,19 +132,38 @@ python3 inference.py ../model_data/ax_masked_face.onnx ../model_data/mask_classe
 
 Optimize onnx file and export prototxt file
 
+### fddb
+
 ```
 cd onnx-ailia
-python onnx_optimizer.py --yolov3 ../model_data/ax_face.onnx
-python onnx2prototxt ../model_data/ax_face.opt.onnx
+python3 onnx_optimizer.py --yolov3 ../model_data/ax_face.onnx
+python3 onnx2prototxt.py ../model_data/ax_face.opt.onnx
+```
+
+### medical-mask-dataset or mixed
+
+```
+cd onnx-ailia
+python3 onnx_optimizer.py --yolov3 ../model_data/ax_masked_face.onnx
+python3 onnx2prototxt.py ../model_data/ax_masked_face.opt.onnx
 ```
 
 ## Inference using ailia SDK
 
 Inference using detector API
 
+### fddb
+
 ```
 cd onnx-ailia
-python inference.py ../model_data/ax_face.opt.onnx ../model_data/face_classes.txt ../images/couple.jpg output.jpg
+python3 inference.py ../model_data/ax_face.opt.onnx ../model_data/face_classes.txt ../images/couple.jpg output.jpg
+```
+
+### medical-mask-dataset or mixed
+
+```
+cd onnx-ailia
+python3 inference.py ../model_data/ax_masked_face.opt.onnx ../model_data/mask_classes.txt ../images/couple.jpg output.jpg
 ```
 
 ## Reference
