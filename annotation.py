@@ -18,6 +18,9 @@ if len(sys.argv)!=3:
 MODE=sys.argv[1]
 DATASET_ROOT_PATH=sys.argv[2]
 
+NO_MASK=0
+MASK=1
+
 if MODE!="fddb" and MODE!="medical-mask-dataset" and MODE!="mixed":
 	print("Unknown mode "+MODE)
 	sys.exit(1)
@@ -29,7 +32,7 @@ if(not os.path.exists(DATASET_ROOT_PATH)):
 annotation_path="./train_"+MODE+".txt"
 f_annotation=open(annotation_path,mode="w")
 
-def fddb(f_annotation,root_src_dir,category):
+def fddb(f_annotation,root_src_dir):
 	if(not os.path.exists(root_src_dir)):
 		print("folder not found "+root_src_dir)
 		sys.exit(1)
@@ -89,7 +92,7 @@ def fddb(f_annotation,root_src_dir,category):
 				h=1.0*h/imageh
 
 				if w>0 and h>0 and x-w/2>=0 and y-h/2>=0 and x+w/2<=1 and y+h/2<=1:
-					f_annotation.write(""+str(xmin)+","+str(ymin)+","+str(xmax)+","+str(ymax)+","+str(category)+" ")
+					f_annotation.write(""+str(xmin)+","+str(ymin)+","+str(xmax)+","+str(ymax)+","+str(NO_MASK)+" ")
 				else:
 					print("Invalid position removed "+str(x)+" "+str(y)+" "+str(w)+" "+str(h))
 			
@@ -137,15 +140,21 @@ def medical_mask_dataset(f_annotation,root_src_dir):
 				xmax=int(xmax*imagew)
 				ymax=int(ymax*imageh)
 				category=int(data[0])
-				f_annotation.write(""+str(xmin)+","+str(ymin)+","+str(xmax)+","+str(ymax)+","+str(category)+" ")
+				if category==0:	#mask
+					symbol=MASK
+				elif category==1:	#half
+					symbol=NO_MASK
+				elif category==2:	#no mask
+					symbol=NO_MASK
+				f_annotation.write(""+str(xmin)+","+str(ymin)+","+str(xmax)+","+str(ymax)+","+str(symbol)+" ")
 			f_annotation.write("\n")
 
 if MODE=="fddb":
-	fddb(f_annotation,DATASET_ROOT_PATH+"fddb/",0)
+	fddb(f_annotation,DATASET_ROOT_PATH+"fddb/")
 if MODE=="medical-mask-dataset":
 	medical_mask_dataset(f_annotation,DATASET_ROOT_PATH+"medical-mask-dataset/")
 if MODE=="mixed":
-	fddb(f_annotation,DATASET_ROOT_PATH+"fddb/",2)
+	fddb(f_annotation,DATASET_ROOT_PATH+"fddb/")
 	medical_mask_dataset(f_annotation,DATASET_ROOT_PATH+"medical-mask-dataset/")
 
 f_annotation.close()

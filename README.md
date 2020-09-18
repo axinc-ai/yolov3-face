@@ -30,14 +30,17 @@ Folder layout examples.
 
 ```
 /Volumes/ST5/dataset/fddb/FDDB-folds/*.txt
-/Volumes/ST5/fddb/originalPics/2002/*
-/Volumes/ST5/fddb/originalPics/2003/*
+/Volumes/ST5/dataset/fddb/originalPics/2002/*
+/Volumes/ST5/dataset/fddb/originalPics/2003/*
 ```
+
 Create fddb annotation data.
 
 ```
-python3 annotation.py fddb /Volumes/ST5/
+python3 annotation.py fddb /Volumes/ST5/dataset/
 ```
+
+Output is train_fddb.txt.
 
 ### medical-mask-dataset
 
@@ -48,16 +51,20 @@ https://www.kaggle.com/vtech6/medical-masks-dataset?fbclid=IwAR0DJG_Ov8dGYWTFrI3
 Create medical-mask-dataset annotation data.
 
 ```
-python3 annotation.py medical-mask-dataset /Volumes/ST5/
+python3 annotation.py medical-mask-dataset /Volumes/ST5/dataset/
 ```
+
+Output is train_medical-mask-dataset.txt.
 
 ### mixed
 
 Create fddb + medical-mask-dataset annotation data.
 
 ```
-python3 annotation.py mixed /Volumes/ST5/
+python3 annotation.py mixed /Volumes/ST5/dataset/
 ```
+
+Output is train_mixed.txt.
 
 ## Training
 
@@ -66,7 +73,6 @@ python3 annotation.py mixed /Volumes/ST5/
 Training from fddb 2845 pictures.
 
 ```
-cd keras-yolo3
 python3 train.py fddb ./model_data/face_classes.txt ./model_data/tiny_yolo_anchors.txt
 ```
 
@@ -81,7 +87,6 @@ This is an output data path.
 Trained from medical-mask-dataset 678 pictures.
 
 ```
-cd keras-yolo3
 python3 train.py medical-mask-dataset ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
 ```
 
@@ -90,7 +95,6 @@ python3 train.py medical-mask-dataset ./model_data/mask_classes.txt ./model_data
 Trained from fddb + medical-mask-dataset 2845 + 678 pictures.
 
 ```
-cd keras-yolo3
 python3 train.py mixed ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
 ```
 
