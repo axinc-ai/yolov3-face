@@ -13,10 +13,14 @@ Implement Face detection using keras-yolo3.
 
 ## Install
 
-    git submodule init
-    git submodule update
+```
+git submodule init
+git submodule update
+```
 
 ## Create dataset
+
+### fddb
 
 Download fddb dataset (FDDB-folds and originalPics folder) and put in the each folder.
 
@@ -24,50 +28,147 @@ http://vis-www.cs.umass.edu/fddb/
 
 Folder layout examples.
 
-    f:/fddb/FDDB-folds/*.txt
-    f:/fddb/originalPics/2002/*
-    f:/fddb/originalPics/2003/*
+```
+/Volumes/ST5/dataset/fddb/FDDB-folds/*.txt
+/Volumes/ST5/dataset/fddb/originalPics/2002/*
+/Volumes/ST5/dataset/fddb/originalPics/2003/*
+```
 
-Create annotation data.
+Create fddb annotation data.
 
-    python annotation.py f:/fddb/
+```
+python3 annotation.py fddb /Volumes/ST5/dataset/
+```
+
+Output is train_fddb.txt.
+
+### medical-mask-dataset
+
+Download medical mask dataset.
+
+https://www.kaggle.com/vtech6/medical-masks-dataset?fbclid=IwAR0DJG_Ov8dGYWTFrI3VHp89S-LtYVDyKMnj5aCJZtPHasG2gonH3F1xuWo
+
+Create medical-mask-dataset annotation data.
+
+```
+python3 annotation.py medical-mask-dataset /Volumes/ST5/dataset/
+```
+
+Output is train_medical-mask-dataset.txt.
+
+### mixed
+
+Create fddb + medical-mask-dataset annotation data.
+
+```
+python3 annotation.py mixed /Volumes/ST5/dataset/
+```
+
+Output is train_mixed.txt.
 
 ## Training
 
-Training from 2845 pictures.
+### fddb
 
-    python train.py f:/fddb/ ./model_data/face_classes.txt ./model_data/tiny_yolo_anchors.txt
+Training from fddb 2845 pictures.
+
+```
+python3 train.py fddb ./model_data/face_classes.txt ./model_data/tiny_yolo_anchors.txt
+```
 
 This is an output data path.
 
-    ./model_data/log/trained_weights_final.h5
+```
+./model_data/log/trained_weights_final.h5
+```
+
+### medical-mask-dataset
+
+Trained from medical-mask-dataset 678 pictures.
+
+```
+python3 train.py medical-mask-dataset ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
+```
+
+### mixed
+
+Trained from fddb + medical-mask-dataset 2845 + 678 pictures.
+
+```
+python3 train.py mixed ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
+```
 
 ## Convert to ONNX
 
-    cd keras-onnx
-    python keras-yolo3-to-onnx.py ../model_data/logs/trained_weights_final.h5 ../model_data/face_classes.txt ../model_data/tiny_yolo_anchors.txt ../model_data/ax_face.onnx
+### fddb
+
+```
+cd keras-onnx
+python3 keras-yolo3-to-onnx.py ../model_data/logs/trained_weights_final.h5 ../model_data/face_classes.txt ../model_data/tiny_yolo_anchors.txt ../model_data/ax_face.onnx
+```
+
+### medical-mask-dataset or mixed
+
+```
+cd keras-onnx
+python3 keras-yolo3-to-onnx.py ../model_data/logs/trained_weights_final.h5 ../model_data/mask_classes.txt ../model_data/tiny_yolo_anchors.txt ../model_data/ax_masked_face.onnx
+```
 
 ## Inference using ONNX Runtime
 
-    cd keras-onnx
-    python inference.py ../model_data/ax_face.onnx ../model_data/face_classes.txt ../images/couple.jpg output.jpg
+### fddb
+
+```
+cd keras-onnx
+python3 inference.py ../model_data/ax_face.onnx ../model_data/face_classes.txt ../images/couple.jpg output.jpg
+```
 
 ![Output](./keras-onnx/output.jpg)
+
+### medical-mask-dataset or mixed
+
+```
+cd keras-onnx
+python3 inference.py ../model_data/ax_masked_face.onnx ../model_data/mask_classes.txt ../images/couple.jpg output.jpg
+```
 
 ## Convert to ailia SDK
 
 Optimize onnx file and export prototxt file
 
-    cd onnx-ailia
-    python onnx_optimizer.py --yolov3 ../model_data/ax_face.onnx
-    python onnx2prototxt ../model_data/ax_face.opt.onnx
+### fddb
+
+```
+cd onnx-ailia
+python3 onnx_optimizer.py --yolov3 ../model_data/ax_face.onnx
+python3 onnx2prototxt.py ../model_data/ax_face.opt.onnx
+```
+
+### medical-mask-dataset or mixed
+
+```
+cd onnx-ailia
+python3 onnx_optimizer.py --yolov3 ../model_data/ax_masked_face.onnx
+python3 onnx2prototxt.py ../model_data/ax_masked_face.opt.onnx
+```
 
 ## Inference using ailia SDK
 
 Inference using detector API
 
-    cd onnx-ailia
-    python inference.py ../model_data/ax_face.opt.onnx ../model_data/face_classes.txt ../images/couple.jpg output.jpg
+### fddb
+
+```
+cd onnx-ailia
+python3 inference.py ../model_data/ax_face.opt.onnx ../model_data/face_classes.txt ../images/couple.jpg output.jpg
+```
+
+### medical-mask-dataset or mixed
+
+```
+cd onnx-ailia
+python3 inference.py ../model_data/ax_masked_face.opt.onnx ../model_data/mask_classes.txt ../images/couple.jpg output.jpg
+```
 
 ## Reference
 

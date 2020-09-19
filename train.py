@@ -18,19 +18,18 @@ from yolo3.utils import get_random_data
 import os
 
 if len(sys.argv)!=4:
-    print("python train.py [folder path] [classes.txt] [anchors.txt]")
+    print("python train.py [fddb/medical-mask-datase/mixed] [classes.txt] [anchors.txt]")
     sys.exit(1)
 
-DATASET_ROOT_PATH=sys.argv[1]
+MODE=sys.argv[1]
 classes_path=sys.argv[2]
 anchors_path=sys.argv[3]
 
-if(not os.path.exists(DATASET_ROOT_PATH)):
-    print("folder not found "+DATASET_ROOT_PATH)
-    sys.exit(1)
-
 def _main():
-    annotation_path = DATASET_ROOT_PATH+'annotations_yolov3_keras/train.txt'
+    annotation_path = './train_'+MODE+'.txt'
+    if(not os.path.exists(annotation_path)):
+        print("file not found "+annotation_path)
+        sys.exit(1)
     log_dir = 'model_data/logs/'
     #classes_path = 'model_data/face_classes.txt'
     #anchors_path = 'model_data/tiny_yolo_anchors.txt'
