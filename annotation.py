@@ -10,6 +10,20 @@ import shutil
 import sys
 import glob
 import cv2
+import equiangular as eq
+import random
+
+ANGLE_RANGE=30
+
+def plot_results(annotations, img, category):
+	for annote in annotations:
+		top_left = (annote[0], annote[1])
+		bottom_right = (annote[2], annote[3])
+
+		# update image
+		color = (255, 40, 40)
+		cv2.rectangle(img, top_left, bottom_right, color, 4)
+	return img
 
 if len(sys.argv)!=2:
 	print("python annotation.py [folder path]")
@@ -64,54 +78,59 @@ for list in range(1,11):
 		imagew=image.shape[1]
 		imageh=image.shape[0]
 
-		copy_path=OUTPUT_BASE_PATH+"/"+str(file_no)+".jpg"
-		relative_path="../FDDB-folds/"+OUTPUT_LABEL+"/"+str(file_no)+".jpg"
+		line_n = int(lines[line_no])
+		for rot in range(-45, 46, 45):
+			rot += random.randint(-10, 10)
+			copy_path = OUTPUT_BASE_PATH + "/" + str(file_no) + "_" + str(rot) + ".jpg"
+			invalid_annotation = False
+			annotations = []
+			_line_no = line_no + 1
 
-		#if file_no%4 == 0:
-		f_annotation.write(copy_path+" ")
-		#else:
-		#	f_test.write(relative_path+" ")
+			for i in range(line_n):
+				line=lines[_line_no]
+				_line_no=_line_no+1
+				data=line.split(" ")
+				major_axis_radius=float(data[0])
+				minor_axis_radius=float(data[1])
+				angle=float(data[2])
+				center_x=float(data[3])
+				center_y=float(data[4])
 
-		shutil.copyfile(image_path, copy_path)
-		
-		line_n=int(lines[line_no])
-		line_no=line_no+1
+				x=center_x
+				y=center_y
+				w=minor_axis_radius*2
+				h=major_axis_radius*2
 
+				category=0
+				eRect = eq.getEquiangularRect(rot, ANGLE_RANGE, int(x - w / 2), int(y - h / 2), w, h, imagew, imageh)
+				xmin, ymin, xmax, ymax = eq.getMinimumEnclosingRect(eRect)
+				xmin = int(xmin)
+				ymin = int(ymin)
+				xmax = int(xmax)
+				ymax = int(ymax)
 
-		for i in range(line_n):
-			line=lines[line_no]
-			line_no=line_no+1
-			#print(line)
-			data=line.split(" ")
-			major_axis_radius=float(data[0])
-			minor_axis_radius=float(data[1])
-			angle=float(data[2])
-			center_x=float(data[3])
-			center_y=float(data[4])
+				if xmax - xmin > 0 and ymax - ymin > 0 \
+					 and xmin >= 0 and ymin >= 0 \
+					 and xmax < imagew and ymax < imageh:
+					annotations.append((xmin, ymin, xmax, ymax, category))
+				else:
+					invalid_annotation = True
+					print("Invalid position removed "+str(xmin)+" "+str(ymin)+" "+str(xmax)+" "+str(ymax))
+					break
 			
-			x=center_x
-			y=center_y
+			if not invalid_annotation:
+				f_annotation.write(copy_path + " ")
+				for annote in annotations:
+					f_annotation.write(""+str(annote[0])+","+str(annote[1])+","+str(annote[2])+","+str(annote[3])+","+str(annote[4])+" ")
+				
+				eImage = eq.getEquiangularImage(image, rot, ANGLE_RANGE)
+				# eImage = plot_results(annotations, eImage, 0)
+				# cv2.imshow(str(rot), eImage)
+				# cv2.waitKey(0)
+				cv2.imwrite(copy_path, eImage)
+				f_annotation.write("\n")
 
-			w=minor_axis_radius*2
-			h=major_axis_radius*2
-
-			category=0
-			xmin=int(x-w/2)
-			ymin=int(y-h/2)
-			xmax=int(x+w/2)
-			ymax=int(y+h/2)
-
-			x=1.0*x/imagew
-			y=1.0*y/imageh
-			w=1.0*w/imagew
-			h=1.0*h/imageh
-
-			if w>0 and h>0 and x-w/2>=0 and y-h/2>=0 and x+w/2<=1 and y+h/2<=1:
-				f_annotation.write(""+str(xmin)+","+str(ymin)+","+str(xmax)+","+str(ymax)+","+str(category)+" ")
-			else:
-				print("Invalid position removed "+str(x)+" "+str(y)+" "+str(w)+" "+str(h))
-		
-		f_annotation.write("\n")
+		line_no = line_no + line_n + 1
 
 f_annotation.close()
 #f_train.close()
