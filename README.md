@@ -100,6 +100,12 @@ Trained from fddb + medical-mask-dataset 2845 + 678 pictures.
 python3 train.py mixed ./model_data/mask_classes.txt ./model_data/tiny_yolo_anchors.txt
 ```
 
+If you want to use yolov3 full version, please use below command.
+
+```
+python3 train.py mixed ./model_data/mask_classes.txt ./model_data/yolo_anchors.txt
+```
+
 ## Convert to ONNX
 
 ### fddb
@@ -114,6 +120,13 @@ python3 keras-yolo3-to-onnx.py ../model_data/logs/trained_weights_final.h5 ../mo
 ```
 cd keras-onnx
 python3 keras-yolo3-to-onnx.py ../model_data/logs/trained_weights_final.h5 ../model_data/mask_classes.txt ../model_data/tiny_yolo_anchors.txt ../model_data/ax_masked_face.onnx
+```
+
+If you want to use yolov3 full version, please use below command.
+
+```
+cd keras-onnx
+python3 keras-yolo3-to-onnx.py ../model_data/logs/trained_weights_final.h5 ../model_data/mask_classes.txt ../model_data/yolo_anchors.txt ../model_data/ax_masked_face.onnx
 ```
 
 ## Inference using ONNX Runtime

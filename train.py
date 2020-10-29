@@ -18,7 +18,7 @@ from yolo3.utils import get_random_data
 import os
 
 if len(sys.argv)!=4:
-    print("python train.py [fddb/medical-mask-datase/mixed] [classes.txt] [anchors.txt]")
+    print("python train.py [fddb/medical-mask-dataset/mixed] [classes.txt] [anchors.txt]")
     sys.exit(1)
 
 MODE=sys.argv[1]
